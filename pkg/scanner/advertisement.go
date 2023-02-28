@@ -10,6 +10,7 @@ import (
 )
 
 type Advertisement struct {
+	Addr             string
 	Mode             byte
 	Model            uint16
 	iv               []byte
@@ -33,7 +34,7 @@ func (a Advertisement) Decrypt(key []byte) ([]byte, error) {
 	return decrypted, nil
 }
 
-func readAdvertisement(data []byte) (Advertisement, error) {
+func readAdvertisement(addr string, data []byte) (Advertisement, error) {
 
 	type layout struct {
 		_         byte // header
@@ -50,6 +51,7 @@ func readAdvertisement(data []byte) (Advertisement, error) {
 	}
 
 	return Advertisement{
+		Addr:             addr,
 		Mode:             l.Mode,
 		Model:            l.Model,
 		iv:               l.IV[:],

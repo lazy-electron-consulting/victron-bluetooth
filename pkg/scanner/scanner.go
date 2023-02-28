@@ -9,8 +9,22 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
+// Handler handlers BLE advertisements.
 type Handler interface {
-	Handle(addr string, advert Advertisement)
+	Handle(advert Advertisement)
+}
+
+type HandlerFunc func(advert Advertisement)
+
+func (f HandlerFunc) Handle(advert Advertisement) { f(advert) }
+
+// FanoutHandler sends adverts to every provided handler.
+func FanoutHandler(handlers ...Handler) Handler {
+	return HandlerFunc(func(advert Advertisement) {
+		for _, hh := range handlers {
+			hh.Handle(advert)
+		}
+	})
 }
 
 // Run scans bluetooth devices for the Victron advertisement data, and calls the
@@ -23,18 +37,16 @@ func Run(ctx context.Context, h Handler) error {
 	var g errgroup.Group
 	g.Go(func() error {
 		return adapter.Scan(func(_ *bluetooth.Adapter, sr bluetooth.ScanResult) {
+			addr := sr.Address.String()
+			logger := slog.Default().With(slog.String("addr", addr), slog.String("name", sr.LocalName()))
 			data, ok := sr.AdvertisementPayload.ManufacturerData()[0x02e1]
-			slog.Debug("scanned",
-				slog.String("addr", sr.Address.String()),
-				slog.String("name", sr.LocalName()),
-				slog.Bool("hasVictronAdvert", ok),
-			)
+			logger.Debug("scanned", slog.Bool("hasVictronAdvert", ok))
 			if ok {
-				ad, err := readAdvertisement(data)
+				ad, err := readAdvertisement(addr, data)
 				if err != nil {
-					slog.Error("failed to decode advert, skipping", err, slog.String("addr", sr.Address.String()))
+					logger.Error("failed to decode advert, skipping", err)
 				} else {
-					h.Handle(sr.Address.String(), ad)
+					h.Handle(ad)
 				}
 			}
 		})
