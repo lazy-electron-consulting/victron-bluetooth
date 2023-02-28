@@ -1,0 +1,9 @@
+{
+    "cSpell.words": [
+        "errgroup",
+        "tinygo",
+        "Victron"
+    ],
+    "go.lintTool": "golangci-lint",
+    "go.testFlags": ["-race", "-count=1", "-test.v"],
+}
