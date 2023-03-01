@@ -1,9 +1,8 @@
 name: Go
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
   build:
@@ -21,3 +20,13 @@ jobs:
           # setup-go handles pkg cache
           skip-pkg-cache: true
           skip-build-cache: true
+      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        if: github.event.pull_request.merged == true
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            dist/*
+            LICENSE
