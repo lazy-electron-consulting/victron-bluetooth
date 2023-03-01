@@ -3,6 +3,9 @@
 Reads device data via Bluetooth Low Energy (BLE) product advertisements.
 Currently only supports battery monitors. Intended to be used as a library or as binaries.
 
+**Disclaimer: This software is not an officially supported interface by Victron
+and is provided entirely "as-is".**
+
 ## Requirements (rough)
 
 1. use `bluetoothctl` to pair ahead of time
