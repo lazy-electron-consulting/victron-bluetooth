@@ -16,4 +16,8 @@ jobs:
           cache: true
       - run: make build
       - run: make test
-      - uses: golangci/golangci-lint-action@v3.1.0
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          # setup-go handles pkg cache
+          skip-pkg-cache: true
+          skip-build-cache: true
