@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
         "errgroup",
+        "mapstructure",
+        "mitchellh",
         "tinygo",
         "Victron"
     ],
