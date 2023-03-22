@@ -3,9 +3,11 @@ package prom
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/devices"
+	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/scanner"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -45,7 +47,21 @@ var (
 		Subsystem: "dcdc_charger",
 		Name:      "error",
 	}, []string{"state"})
+
+	btAdverts = promauto.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: "bluetooth",
+		Name:      "advertisements_total",
+	}, []string{"addr", "mode", "model"})
 )
+
+// ObserveAdvertisement updates metrics for newly seen advertisements.
+func ObserveAdvertisement(ad scanner.Advertisement) {
+	btAdverts.WithLabelValues(
+		ad.Addr,
+		fmt.Sprintf("%x", ad.Mode),
+		fmt.Sprintf("%x", ad.Model),
+	).Inc()
+}
 
 // ObserveBatteryMonitor updates metrics for the reading.
 func ObserveBatteryMonitor(r devices.BatteryMonitorReading) {

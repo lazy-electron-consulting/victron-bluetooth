@@ -63,6 +63,7 @@ func (e *Exporter) Handle(ad scanner.Advertisement) {
 		slog.String("Model", fmt.Sprintf("%x", ad.Model)),
 		slog.String("addr", ad.Addr),
 	)
+	prom.ObserveAdvertisement(ad)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
