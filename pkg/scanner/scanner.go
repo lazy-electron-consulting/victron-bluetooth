@@ -3,7 +3,9 @@ package scanner
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/scanner/idle"
 	"golang.org/x/exp/slog"
 	"golang.org/x/sync/errgroup"
 	"tinygo.org/x/bluetooth"
@@ -34,9 +36,21 @@ func Run(ctx context.Context, h Handler) error {
 	if err := adapter.Enable(); err != nil {
 		return fmt.Errorf("adapter not enabled: %w", err)
 	}
-	var g errgroup.Group
+
+	timer := idle.New(5 * time.Minute)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error { return timer.Run(ctx) })
+
+	g.Go(func() error {
+		<-ctx.Done()
+		return ctx.Err()
+	})
+
 	g.Go(func() error {
 		return adapter.Scan(func(_ *bluetooth.Adapter, sr bluetooth.ScanResult) {
+			timer.SetActive()
 			addr := sr.Address.String()
 			logger := slog.Default().With(slog.String("addr", addr), slog.String("name", sr.LocalName()))
 			data, ok := sr.AdvertisementPayload.ManufacturerData()[0x02e1]
@@ -51,11 +65,13 @@ func Run(ctx context.Context, h Handler) error {
 			}
 		})
 	})
-	g.Go(func() error {
-		<-ctx.Done()
-		return adapter.StopScan()
-	})
+
 	slog.Info("scanning devices")
 	defer slog.Info("stopped scanning")
+	defer func() {
+		if err := adapter.StopScan(); err != nil {
+			slog.Error("failed to stop scan while shutting down", err)
+		}
+	}()
 	return g.Wait()
 }
