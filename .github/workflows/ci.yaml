@@ -1,0 +1,22 @@
+name: CI
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - run: make build
+      - run: make test
+      - uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: tests
+          path: test-results.xml
+          reporter: jest-junit
+      - run: make release

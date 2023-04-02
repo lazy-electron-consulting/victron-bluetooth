@@ -1,5 +1,6 @@
 BUILD_DIR := ./cmd/...
 ARCHS := amd64 arm64 armv7
+GO_JUNIT_REPORT := go run github.com/jstemmer/go-junit-report/v2@latest
 
 .PHONY: build test verify exporter log-battery
 
@@ -27,4 +28,4 @@ log-battery: $(addprefix build-log-battery-, $(ARCHS))
 release: verify exporter log-battery
 
 test:
-	go test -v -race ./...
+	go test -count 1 -v -race ./... 2>&1 | $(GO_JUNIT_REPORT) -iocopy -out test-results.xml -set-exit-code
