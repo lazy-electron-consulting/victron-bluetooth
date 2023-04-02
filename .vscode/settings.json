@@ -7,5 +7,7 @@
         "Victron"
     ],
     "go.lintTool": "golangci-lint",
-    "go.testFlags": ["-race", "-count=1", "-test.v"],
+    "go.testFlags": ["-race", "-count=1", "-v"],
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true
 }
