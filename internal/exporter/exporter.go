@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	_ "net/http/pprof"
+
 	"github.com/lazy-electron-consulting/victron-bluetooth/internal/exporter/prom"
 	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/devices"
 	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/scanner"
