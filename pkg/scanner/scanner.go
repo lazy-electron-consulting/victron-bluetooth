@@ -3,6 +3,7 @@ package scanner
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/lazy-electron-consulting/victron-bluetooth/pkg/scanner/idle"
@@ -36,16 +37,24 @@ func Run(ctx context.Context, h Handler) error {
 	if err := adapter.Enable(); err != nil {
 		return fmt.Errorf("adapter not enabled: %w", err)
 	}
+	var once sync.Once // StopScan is not re-entrant, ensure we only stop once
+	stop := func() {
+		once.Do(func() {
+			if err := adapter.StopScan(); err != nil {
+				slog.Error("failed to stop scan: ", err)
+			}
+		})
+	}
+	defer stop()
 
 	timer := idle.New(5 * time.Minute)
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error { return timer.Run(ctx) })
-
 	g.Go(func() error {
-		<-ctx.Done()
-		return ctx.Err()
+		defer slog.Warn("idle timer expired")
+		defer stop()
+		return timer.Run(ctx)
 	})
 
 	g.Go(func() error {
@@ -68,10 +77,5 @@ func Run(ctx context.Context, h Handler) error {
 
 	slog.Info("scanning devices")
 	defer slog.Info("stopped scanning")
-	defer func() {
-		if err := adapter.StopScan(); err != nil {
-			slog.Error("failed to stop scan while shutting down", err)
-		}
-	}()
 	return g.Wait()
 }
